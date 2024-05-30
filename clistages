@@ -1,0 +1,65 @@
+pipeline {
+    agent any
+
+    environment {
+       
+        SF_USERNAME = credentials('salesforce-username') 
+        SF_PASSWORD = credentials('salesforce-password')
+        SF_TOKEN = credentials('salesforce-token')
+        SF_SERVERURL = 'https://login.salesforce.com' 
+    }
+
+    stages {
+        stage('Check Salesforce CLI Installation') {
+            steps {
+                script {
+                    
+                    sh 'sfdx --version'
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+               
+                git branch: 'main', url: 'https://github.com/your-repo/salesforce-project.git'
+            }
+        }
+
+        stage('Authenticate Salesforce') {
+            steps {
+                script {
+                   
+                    sh 'sfdx auth:sfdxurl:store -f sfdxAuthUrl.txt -a MyOrg'
+                }
+            }
+        }
+
+        stage('Validate Deployment') {
+            steps {
+                script {
+                   
+                    sh 'sfdx force:source:deploy -p force-app/main/default -u MyOrg --checkonly'
+                }
+            }
+        }
+
+        stage('Deploy to Salesforce') {
+            steps {
+                script {
+                   
+                    sh 'sfdx force:source:deploy -p force-app/main/default -u MyOrg'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed!'
+        }
+    }
+}
